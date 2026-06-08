@@ -1,5 +1,5 @@
 {
-  "_comment": "Config for scanning THIS repo (the scanner's own). allowFiles skips the test harness, which intentionally contains leak-shaped fixtures (synthetic emails/IPs) to exercise detection. allow scopes the GitHub handle in install URLs / LICENSE so a local scan with an owner list does not trip on the public namespace.",
+  "_comment": "Config for scanning THIS repo (the scanner's own). allowFiles skips the test harness, which intentionally contains leak-shaped fixtures (synthetic emails/IPs) to exercise detection. allow scopes the GitHub handle in install URLs / LICENSE so a local scan with an owner list does not trip on the public namespace. The placeholder email/IP tokens below are documentation examples in README.md and WHITEPAPER.md that illustrate the config format and the generic PII patterns; they are fixed fake values, not owner data, so allow-listing them by exact string suppresses only those example lines and still catches any real leak (a different value on a different line).",
   "allowFiles": ["test/"],
-  "allow": ["github:nidamen/", "github.com/nidamen", "nidamen/mcp", "Copyright (c) 2026 nidamen"]
+  "allow": ["github:nidamen/", "github.com/nidamen", "nidamen/mcp", "Copyright (c) 2026 nidamen", "your@email.com", "owner@email.com", "user@domain.tld", "192.168.1.50"]
 }
