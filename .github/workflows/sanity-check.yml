@@ -1,0 +1,49 @@
+name: sanity-check
+
+# Reusable PII/secret gate. Two ways to use it:
+#
+# 1) Drop this file into ANY repo at .github/workflows/sanity-check.yml. It will
+#    scan the repo on every push and PR and fail the build on any hit.
+#
+# 2) Call it as a reusable workflow from another repo's job:
+#
+#      jobs:
+#        sanity:
+#          uses: <owner>/mcp-sanity-check/.github/workflows/sanity-check.yml@main
+#
+#    (works once this repo is published; until then, vendor this file directly.)
+
+on:
+  push:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  sanity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history so diffs/ls-files are complete)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # If this workflow lives INSIDE the mcp-sanity-check repo, run the local
+      # scanner. Otherwise, fetch it via npx and scan the checked-out repo.
+      - name: Run sanity-check (local scanner if present)
+        run: |
+          set -e
+          if [ -f bin/mcp-sanity-check.mjs ]; then
+            echo "Using local scanner."
+            node bin/mcp-sanity-check.mjs --path . --no-color
+          else
+            echo "Using published scanner via npx."
+            npx --yes mcp-sanity-check --path . --no-color
+          fi

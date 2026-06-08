@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+#
+# mcp-sanity-check pre-push hook.
+# Blocks a push if any commit ABOUT TO BE PUSHED introduces an owner identifier
+# or a secret. Scans only the added lines in the outgoing commit range, so it is
+# fast and won't punish you for pre-existing content in history.
+#
+# ---------------------------------------------------------------------------
+# INSTALL (from the repo you want to protect):
+#
+#   # Option A - copy into this repo's hooks dir:
+#   cp /path/to/mcp-sanity-check/hooks/pre-push .git/hooks/pre-push
+#   chmod +x .git/hooks/pre-push
+#
+#   # Option B - shared hooks dir (covers all repos that opt in):
+#   mkdir -p ~/.git-hooks && cp /path/to/mcp-sanity-check/hooks/pre-push ~/.git-hooks/
+#   chmod +x ~/.git-hooks/pre-push
+#   git config --global core.hooksPath ~/.git-hooks
+#
+# The hook locates the scanner in this order:
+#   1) $MCP_SANITY_CHECK env var (full path to mcp-sanity-check.mjs)
+#   2) a `mcp-sanity-check` binary on PATH (npm-installed)
+#   3) npx mcp-sanity-check (downloads if published)
+# ---------------------------------------------------------------------------
+
+set -euo pipefail
+
+# Resolve the scanner invocation.
+run_scanner() {
+  if [ -n "${MCP_SANITY_CHECK:-}" ] && [ -f "${MCP_SANITY_CHECK}" ]; then
+    node "${MCP_SANITY_CHECK}" "$@"
+  elif command -v mcp-sanity-check >/dev/null 2>&1; then
+    mcp-sanity-check "$@"
+  else
+    npx --yes mcp-sanity-check "$@"
+  fi
+}
+
+z40="0000000000000000000000000000000000000000"
+fail=0
+
+# git feeds the hook lines of: <local ref> <local sha> <remote ref> <remote sha>
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Deleting a remote ref: nothing to scan.
+  if [ "$local_sha" = "$z40" ]; then
+    continue
+  fi
+
+  if [ "$remote_sha" = "$z40" ]; then
+    # New branch on remote: scan all commits reachable from local that aren't
+    # on any other already-pushed ref.
+    range_spec=$(git rev-list "$local_sha" --not --remotes 2>/dev/null | tail -n1 || true)
+    if [ -n "$range_spec" ]; then
+      base="${range_spec}^"
+      git rev-parse --verify "$base" >/dev/null 2>&1 && RANGE="${base}..${local_sha}" || RANGE="${local_sha}"
+    else
+      RANGE="${local_sha}"
+    fi
+  else
+    RANGE="${remote_sha}..${local_sha}"
+  fi
+
+  echo "mcp-sanity-check: scanning outgoing range ${RANGE}"
+  if ! run_scanner --range "${RANGE}"; then
+    fail=1
+  fi
+done
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "mcp-sanity-check: PUSH BLOCKED. Outgoing commits contain owner identifiers or secrets."
+  echo "Fix the flagged lines (or whitelist a false positive in .sanity-patterns.json) and re-push."
+  echo "To bypass intentionally (NOT recommended): git push --no-verify"
+  exit 1
+fi
+
+exit 0

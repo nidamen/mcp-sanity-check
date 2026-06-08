@@ -1,0 +1,6 @@
+This is a perfectly clean configuration file.
+host = example.com
+port = 8080
+description = A sample app that talks to a public API.
+maintainer = Open Source Contributor
+notes = No private data here, just ordinary words and version v1.2.3.

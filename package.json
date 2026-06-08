@@ -1,0 +1,32 @@
+{
+  "name": "mcp-sanity-check",
+  "version": "0.1.0",
+  "description": "Dependency-light PII/secret sanity-check gate: scans a repo's tracked files for owner identifiers and secrets before it goes public. Exits non-zero on any hit.",
+  "type": "module",
+  "bin": {
+    "mcp-sanity-check": "bin/mcp-sanity-check.mjs"
+  },
+  "scripts": {
+    "scan": "node bin/mcp-sanity-check.mjs",
+    "test": "node test/run.mjs"
+  },
+  "files": [
+    "bin/",
+    "hooks/",
+    "README.md"
+  ],
+  "keywords": [
+    "security",
+    "secrets",
+    "pii",
+    "pre-push",
+    "git-hook",
+    "ci",
+    "scanner",
+    "mcp"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "_comment": "Config for scanning THIS repo (the scanner's own). allowFiles skips the test harness, which intentionally contains leak-shaped fixtures (synthetic emails/IPs) to exercise detection. allow scopes the GitHub handle in install URLs / LICENSE so a local scan with an owner list does not trip on the public namespace.",
+  "allowFiles": ["test/"],
+  "allow": ["github:nidamen/", "github.com/nidamen", "nidamen/mcp", "Copyright (c) 2026 nidamen"]
+}
